@@ -12,10 +12,10 @@ import java.util.Collections
 class Model2Yed{
 	
 	def public transform(List<EObject> model) {
-		transform(model, Collections.emptySet, Collections.emptySet)
+		transform(model, Collections.emptySet, Collections.emptySet, Collections.emptySet)
 	}
 	
-	def public transform(List<EObject> model, Set<Object> yellow, Set<Object> red) {
+	def public transform(List<EObject> model, Set<Object> yellow, Set<Object> red, Set<EObject> green) {
 		val Map<EObject, Integer> objectToID = new HashMap
 		
 		'''
@@ -23,7 +23,7 @@ class Model2Yed{
 		graph
 		[
 			«FOR object:model SEPARATOR '\n'»
-				«this.transformObject(object,objectToID.size+1,objectToID, yellow, red)»
+				«this.transformObject(object,objectToID.size+1,objectToID, yellow, red, green)»
 			«ENDFOR»
 			«FOR from:model»
 				«FOR reference:from.eClass.EAllReferences»
@@ -46,20 +46,22 @@ class Model2Yed{
 	val protected attributeBorderDistance = 8
 	val protected ratio = 11.0/20.0
 	
-	def protected color(EObject object, Set<Object> yellow, Set<Object> red) {
+	def protected color(EObject object, Set<Object> yellow, Set<Object> red, Set<EObject> green) {
 		if(yellow.contains(object))
 			return "#FFFF00" 
 		if(red.contains(object))
 			return "#FF0000"
+		if(green.contains(object))
+			return "#00FF00"
 		return "#FFFFFF"
 	}
 	
-	def protected transformObject(EObject object,int id,Map<EObject, Integer> objectToID, Set<Object> yellow, Set<Object> red){
+	def protected transformObject(EObject object,int id,Map<EObject, Integer> objectToID, Set<Object> yellow, Set<Object> red, Set<EObject> green){
 		val title = object.transormTitle(id)
 		val attributes = object.eClass.
 			getEAllAttributes.map[transformAttribute(object.eGet(it,true))]
 		
-		val color = color(object,yellow,red)
+		val color = color(object,yellow,red,green)
 		
 		var double width = title.length*titleSize + borderDistance*2;
 		for(x:attributes.map[length*attributeSize + borderDistance*2 + attributeBorderDistance*2])
