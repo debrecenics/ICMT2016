@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.telecare.simplified.model.query
+package hu.bme.mit.inf.telecare.simplified.generator.query
 
 import "hu.bme.mit.inf.telecare"
 

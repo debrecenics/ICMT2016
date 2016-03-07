@@ -1,8 +1,7 @@
-package hu.bme.mit.inf.telecare.simplified.model;
+package hu.bme.mit.inf.telecare.simplified.generator;
 
 import java.util.Collection;
 
-import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.incquery.runtime.api.IPatternMatch;
 import org.eclipse.incquery.runtime.api.IQuerySpecification;
 import org.eclipse.incquery.runtime.api.IncQueryEngine;
@@ -12,14 +11,16 @@ import org.eclipse.incquery.runtime.exception.IncQueryException;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
+import telecare.TelecareSystem;
+
 public class TraceabilityModel {
 
 	public Multimap<Object, IPatternMatch> traceMap = ArrayListMultimap.create();
 	
 	@SuppressWarnings("deprecation")
-	public static Multimap<Object, IPatternMatch> calculateTraceList(Resource resource, 
+	public static Multimap<Object, IPatternMatch> calculateTraceList(TelecareSystem system, 
 			Collection<IQuerySpecification<?>> specifications) throws IncQueryException {
-		IncQueryEngine engine = IncQueryEngine.on(resource);
+		IncQueryEngine engine = IncQueryEngine.on(system);
 		Multimap<Object, IPatternMatch> traceMap = ArrayListMultimap.create();
 		for (IQuerySpecification<?> spec : specifications) {
 			IncQueryMatcher<? extends IPatternMatch> matcher = engine.getMatcher(spec);

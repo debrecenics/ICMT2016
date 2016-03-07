@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.telecare.simplified.model;
+package hu.bme.mit.inf.telecare.simplified.generator;
 
 import java.io.PrintWriter;
 import java.rmi.UnexpectedException;
@@ -44,52 +44,75 @@ import hu.bme.mit.inf.telecare.simplified.model.query.util.SrcQuerySpecification
 import hu.bme.mit.inf.telecare.simplified.model.query.util.TrgQuerySpecification;
 import telecare.TelecareFactory;
 import telecare.TelecarePackage;
+import telecare.TelecareSystem;
 
 public class ChangeGenerator {
 
 	private static final Random RANDOM = new Random();
 
-	private static Resource resource;
+	private Resource resource;
 	
-	private static Set<IQuerySpecification<?>> objRules;
-	private static Set<IQuerySpecification<?>> refRules;
-	private static Set<IQuerySpecification<?>> extendedRules;
+	private Set<IQuerySpecification<?>> objRules;
+	private Set<IQuerySpecification<?>> refRules;
+	private Set<IQuerySpecification<?>> extendedRules;
 
-	private static Multimap<Object, IPatternMatch> traceO;
-	private static Multimap<Object, IPatternMatch> traceF;
-	private static Multimap<Object, IPatternMatch> traceE;
+	private Multimap<Object, IPatternMatch> traceO;
+	private Multimap<Object, IPatternMatch> traceF;
+	private Multimap<Object, IPatternMatch> traceE;
 
-	private static CategorizedModel model;
+	private CategorizedModel model;
 	
 	@SuppressWarnings("unused")
-	private static TelecarePackage ePackage;
-	private static TelecareFactory eFactory;
+	private TelecarePackage ePackage;
+	@SuppressWarnings("unused")
+	private TelecareFactory eFactory;
 	
-	public static void main(String[] args) throws Exception {
-		ePackage = TelecarePackage.eINSTANCE;
-		eFactory = TelecareFactory.eINSTANCE;
+	private ChangeGenerator() {
+	}
+	
+	public ChangeGenerator(int changeSize, TelecareSystem system) throws Exception {
 		
-		Resource.Factory.Registry.INSTANCE.getExtensionToFactoryMap().put("xmi", new XMIResourceFactoryImpl());
-		loadResource(args[0]);
+		model = new CategorizedModel(null,system);
 		
 		initialize();
 		buildTraceability();		
-		introduceChanges(args[1]);
+		introduceChanges(changeSize);
+		
+		model.yedOriginal = calculateYed();
+		model.yedModified = calculateYedColored();
+	}
+	
+	public CategorizedModel getModel() {
+		return model;
+	}
+	
+	public static void main(String[] args) throws Exception {
+		ChangeGenerator generator = new ChangeGenerator();
+		
+		generator.ePackage = TelecarePackage.eINSTANCE;
+		generator.eFactory = TelecareFactory.eINSTANCE;
+		
+		Resource.Factory.Registry.INSTANCE.getExtensionToFactoryMap().put("xmi", new XMIResourceFactoryImpl());
+		generator.loadResource(args[0]);
+		generator.model = new CategorizedModel(generator.resource,(TelecareSystem) generator.resource.getContents().get(0));
+		
+		generator.initialize();
+		generator.buildTraceability();		
+		generator.introduceChanges(Integer.valueOf(args[1]));
 		
 		System.out.println("Delete object match");
-		System.out.println(model.objRemoval);
+		System.out.println(generator.model.objRemoval);
 		System.out.println("Delete don't care matches");
-		System.out.println(model.dontCareRemoval);
+		System.out.println(generator.model.dontCareRemoval);
 		System.out.println("Delete edge match");
-		System.out.println(model.refRemoval);
+		System.out.println(generator.model.refRemoval);
 		System.out.println("Changeable Part");
-		System.out.println(model.changeblePart);
+		System.out.println(generator.model.changeblePart);
 		System.out.println("Removable Part");
-		System.out.println(model.removablePart);
+		System.out.println(generator.model.removablePart);
 		
-		Model2Yed yed = new Model2Yed();
-		CharSequence sequence = yed.transform(Lists.newArrayList(resource.getAllContents()), model.changeblePart, model.removablePart);
-		String file = resource.getURI().toFileString();
+		CharSequence sequence = generator.calculateYedColored();
+		String file = generator.resource.getURI().toFileString();
 		file += ".changed-"+args[1]+".gml";
 		
 		PrintWriter writer = new PrintWriter(file, "UTF-8");
@@ -97,7 +120,19 @@ public class ChangeGenerator {
 		writer.close();
  	}
 
-	private static void initialize() throws IncQueryException {
+	private CharSequence calculateYed() {
+		Model2Yed yed = new Model2Yed();
+		CharSequence sequence = yed.transform(Lists.newArrayList(resource.getAllContents()));
+		return sequence;
+	}
+	
+	private CharSequence calculateYedColored() {
+		Model2Yed yed = new Model2Yed();
+		CharSequence sequence = yed.transform(Lists.newArrayList(resource.getAllContents()), model.changeblePart, model.removablePart);
+		return sequence;
+	}
+
+	private void initialize() throws IncQueryException {
 		objRules = ImmutableSet.<IQuerySpecification<?>>of(
 				ActionQuerySpecification.instance(),
 				FinishQuerySpecification.instance(),
@@ -115,15 +150,13 @@ public class ChangeGenerator {
 				DataflowExtendedQuerySpecification.instance());
 	}
 
-	private static void buildTraceability() throws IncQueryException {
-		traceO = TraceabilityModel.calculateTraceList(resource, objRules);
-		traceF = TraceabilityModel.calculateTraceList(resource, refRules);
-		traceE = TraceabilityModel.calculateTraceList(resource, extendedRules);
+	private void buildTraceability() throws IncQueryException {
+		traceO = TraceabilityModel.calculateTraceList(model.system, objRules);
+		traceF = TraceabilityModel.calculateTraceList(model.system, refRules);
+		traceE = TraceabilityModel.calculateTraceList(model.system, extendedRules);
 	}
 
-	private static void introduceChanges(String arg) throws UnexpectedException {
-		Integer numberOfChanges = Integer.valueOf(arg);
-		model = new CategorizedModel(resource);
+	private void introduceChanges(int numberOfChanges) throws UnexpectedException {
 		for(int i = 0; i < numberOfChanges; i++) {
 			IPatternMatch objRemoval = getArbitraryFromSet(traceO.values().stream().filter(x -> !(x instanceof InitMatch) && !(x instanceof FinishMatch)).collect(Collectors.toList()));
 			model.objRemoval.add(objRemoval);
@@ -135,7 +168,7 @@ public class ChangeGenerator {
 		}
 	}
 
-	private static void removeObjectMatch(CategorizedModel model, IPatternMatch removal) {
+	private void removeObjectMatch(CategorizedModel model, IPatternMatch removal) {
 		traceO.values().remove(removal);
 		removeDontCareMatches(model, removal);
 		for (String param : removal.parameterNames()) {
@@ -149,7 +182,7 @@ public class ChangeGenerator {
 		}
 	}
 
-	private static void removeReferenceMatch(CategorizedModel model, IPatternMatch removal) {
+	private void removeReferenceMatch(CategorizedModel model, IPatternMatch removal) {
 		traceF.values().remove(removal);
 		Object first = removal.get(0);
 		Object second = removal.get(1);
@@ -168,7 +201,7 @@ public class ChangeGenerator {
 		}
 	}
 	
-	private static IPatternMatch getArbitraryFromSet(Collection<IPatternMatch> matchSet) throws UnexpectedException {
+	private IPatternMatch getArbitraryFromSet(Collection<IPatternMatch> matchSet) throws UnexpectedException {
 		int size = matchSet.size();
 		int item = RANDOM.nextInt(size); // In real life, the Random object should be rather more shared than this
 		int i = 0;
@@ -181,7 +214,7 @@ public class ChangeGenerator {
 		throw new UnexpectedException("There no more matches in the set");
 	}
 	
-	private static void removeDontCareMatches(CategorizedModel model, IPatternMatch match) {
+	private void removeDontCareMatches(CategorizedModel model, IPatternMatch match) {
 		if(match instanceof InitMatch || match instanceof FinishMatch || match instanceof ActionMatch) {
 			Object object = match.get(0);
 			List<IPatternMatch> dontCare = traceF.get(object).stream().filter(x -> x instanceof AfterMatch)
@@ -219,7 +252,7 @@ public class ChangeGenerator {
 		}
 	}
 	
-	private static void loadResource(String path) {
+	private void loadResource(String path) {
 		ResourceSet rSet = new ResourceSetImpl();
 		resource = rSet.getResource(URI.createFileURI(path), true);
 	}

@@ -27,28 +27,43 @@ import telecare.TelecareSystem;
 public class ModelGenerator {
 
 	@SuppressWarnings("unused")
-	private static TelecarePackage ePackage;
-	private static TelecareFactory eFactory;
-	private static Resource resource;
+	private TelecarePackage ePackage;
+	private TelecareFactory eFactory;
+	private TelecareSystem system;
+	private Resource resource;
+	
+	private ModelGenerator() {
+	}
+	
+	public ModelGenerator(int modelSize) {
+		this.resource = system.eResource();
+		generate(modelSize);
+	}
+	
+	
+	public TelecareSystem getModel() {
+		return system;
+	}
 	
 	
 	public static void main(String[] args) throws IOException {
-		ePackage = TelecarePackage.eINSTANCE;
-		eFactory = TelecareFactory.eINSTANCE;
+		ModelGenerator generator = new ModelGenerator();
+		generator.ePackage = TelecarePackage.eINSTANCE;
+		generator.eFactory = TelecareFactory.eINSTANCE;
 		
 		Resource.Factory.Registry.INSTANCE.getExtensionToFactoryMap().put("xmi", new XMIResourceFactoryImpl());
 		
-		createResource(args[0], args[1]);
-		generate(Integer.valueOf(args[1]));
-		saveResource();
+		generator.createResource(args[0], args[1]);
+		generator.generate(Integer.valueOf(args[1]));
+		generator.saveResource();
 	}
 
-	private static void createResource(String genFolder, String level) {
+	private void createResource(String genFolder, String level) {
 		ResourceSet rSet = new ResourceSetImpl();
 		resource = rSet.createResource(URI.createFileURI(genFolder+"instance-"+level+".xmi"));
 	}
 	
-	private static void saveResource() throws IOException {
+	private void saveResource() throws IOException {
 		
 		Model2Yed yed = new Model2Yed();
 		CharSequence sequence = yed.transform(Lists.newArrayList(resource.getAllContents()));
@@ -62,9 +77,9 @@ public class ModelGenerator {
 		resource.save(Collections.emptyMap());
 	}
 	
-	private static void generate(int n) {
+	private void generate(int n) {
 		//Root object
-		TelecareSystem system = eFactory.createTelecareSystem();
+		system = eFactory.createTelecareSystem();
 		//Sensor
 		Sensor sensor = eFactory.createSensor();
 		sensor.setName("sensor"+n);
@@ -125,6 +140,6 @@ public class ModelGenerator {
 	}
 
 	
-	private static char[] mapIntToChar = {'A','B','C','D'};
+	private static final char[] mapIntToChar = {'A','B','C','D'};
 	
 }
