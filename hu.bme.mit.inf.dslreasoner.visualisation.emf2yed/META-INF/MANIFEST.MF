@@ -1,0 +1,18 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Emf2yed
+Bundle-SymbolicName: hu.bme.mit.inf.dslreasoner.visualisation.emf2yed;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Require-Bundle: com.google.guava,
+ org.eclipse.xtext.xbase.lib,
+ org.eclipse.xtend.lib,
+ org.eclipse.xtend.lib.macro,
+ org.eclipse.emf.ecore,
+ org.eclipse.core.commands;bundle-version="3.7.0",
+ org.eclipse.ui.workbench,
+ org.eclipse.jface;bundle-version="3.11.0"
+Import-Package: org.eclipse.core.resources,
+ org.eclipse.core.runtime;version="3.5.0"
+Export-Package: hu.bme.mit.inf.dslreasoner.visualisation.emf2yed
+

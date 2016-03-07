@@ -1,0 +1,45 @@
+package hu.bme.mit.inf.telecare.simplified.model.query
+
+import "hu.bme.mit.inf.telecare"
+
+pattern init(t) {
+	PeriodicTrigger(t);
+}
+
+pattern action(t) {
+	Action(t);
+}
+
+pattern finish(t) {
+	PeriodicTrigger(t);
+}
+
+pattern after(a,b) {
+	Action.when(b,a);
+} or {
+	Action.when(b,t);
+	EventFinishedTrigger.triggeredBy(t,a);
+} or {
+	Action(a);
+	PeriodicTrigger(b);
+	Trigger(t);
+	neg find hasTrigger(a,t);
+}
+
+pattern afterExtendedA(a,b) {
+	Action.when(b,a);
+}
+
+pattern afterExtendedB(a,b,t) {
+	Action.when(b,t);
+	EventFinishedTrigger.triggeredBy(t,a);
+} or {
+	Action(a);
+	PeriodicTrigger(b);
+	Trigger(t);
+	neg find hasTrigger(a,t);
+}
+
+pattern hasTrigger(a,t) {
+	EventFinishedTrigger.triggeredBy(t,a);
+}

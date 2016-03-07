@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?><plugin>
+  <extension id="hu.bme.mit.inf.telecare.simplified.model.query.Eventflow" point="org.eclipse.incquery.runtime.queryspecification">
+    <group group="org.eclipse.incquery.runtime.extensibility.SingletonExtensionFactory:hu.bme.mit.inf.telecare.simplified.model.query.Eventflow" id="hu.bme.mit.inf.telecare.simplified.model.query.Eventflow"/>
+  </extension>
+  <extension id="hu.bme.mit.inf.telecare.simplified.model.query.Dataflow" point="org.eclipse.incquery.runtime.queryspecification">
+    <group group="org.eclipse.incquery.runtime.extensibility.SingletonExtensionFactory:hu.bme.mit.inf.telecare.simplified.model.query.Dataflow" id="hu.bme.mit.inf.telecare.simplified.model.query.Dataflow"/>
+  </extension>
+</plugin>

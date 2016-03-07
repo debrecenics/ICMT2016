@@ -1,0 +1,22 @@
+package hu.bme.mit.inf.telecare.simplified.model.query
+
+import "hu.bme.mit.inf.telecare"
+
+pattern src(type) {
+	MeasurementType(type);
+}
+
+pattern trg(host) {
+	Host(host);
+}
+
+pattern dataflow(type,host) {
+	Report.what.type(r, type);
+	Report.where(r, host);
+}
+
+pattern dataflowExtended(type,host,r,m) {
+	Report.what(r,m);
+	Measure.type(m, type);
+	Report.where(r, host);
+}
