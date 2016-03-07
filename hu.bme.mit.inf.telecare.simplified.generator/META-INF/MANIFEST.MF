@@ -4,8 +4,7 @@ Bundle-Name: hu.bme.mit.inf.telecare.simplified.model
 Bundle-SymbolicName: hu.bme.mit.inf.telecare.simplified.generator;singleton:=true
 Bundle-Version: 0.0.1.qualifier
 Export-Package: hu.bme.mit.inf.telecare.simplified.generator.query,
- hu.bme.mit.inf.telecare.simplified.generator.query.util,
- hu.bme.mit.inf.telecare.simplified.model.query.util
+ hu.bme.mit.inf.telecare.simplified.generator.query.util
 Require-Bundle: org.eclipse.emf.ecore,
  org.eclipse.incquery.runtime,
  org.eclipse.xtext.xbase.lib,

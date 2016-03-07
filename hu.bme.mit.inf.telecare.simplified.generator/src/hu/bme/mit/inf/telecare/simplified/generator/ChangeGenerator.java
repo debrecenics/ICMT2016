@@ -1,18 +1,12 @@
 package hu.bme.mit.inf.telecare.simplified.generator;
 
-import java.io.PrintWriter;
-import java.rmi.UnexpectedException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.eclipse.emf.common.util.URI;
-import org.eclipse.emf.ecore.resource.Resource;
-import org.eclipse.emf.ecore.resource.ResourceSet;
-import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
-import org.eclipse.emf.ecore.xmi.impl.XMIResourceFactoryImpl;
+import org.eclipse.emf.ecore.EObject;
 import org.eclipse.incquery.runtime.api.IPatternMatch;
 import org.eclipse.incquery.runtime.api.IQuerySpecification;
 import org.eclipse.incquery.runtime.exception.IncQueryException;
@@ -22,40 +16,44 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 
 import hu.bme.mit.inf.dslreasoner.visualisation.emf2yed.Model2Yed;
-import hu.bme.mit.inf.telecare.simplified.model.query.ActionMatch;
-import hu.bme.mit.inf.telecare.simplified.model.query.AfterExtendedAMatch;
-import hu.bme.mit.inf.telecare.simplified.model.query.AfterExtendedBMatch;
-import hu.bme.mit.inf.telecare.simplified.model.query.AfterMatch;
-import hu.bme.mit.inf.telecare.simplified.model.query.DataflowExtendedMatch;
-import hu.bme.mit.inf.telecare.simplified.model.query.DataflowMatch;
-import hu.bme.mit.inf.telecare.simplified.model.query.FinishMatch;
-import hu.bme.mit.inf.telecare.simplified.model.query.InitMatch;
-import hu.bme.mit.inf.telecare.simplified.model.query.SrcMatch;
-import hu.bme.mit.inf.telecare.simplified.model.query.TrgMatch;
-import hu.bme.mit.inf.telecare.simplified.model.query.util.ActionQuerySpecification;
-import hu.bme.mit.inf.telecare.simplified.model.query.util.AfterExtendedAQuerySpecification;
-import hu.bme.mit.inf.telecare.simplified.model.query.util.AfterExtendedBQuerySpecification;
-import hu.bme.mit.inf.telecare.simplified.model.query.util.AfterQuerySpecification;
-import hu.bme.mit.inf.telecare.simplified.model.query.util.DataflowExtendedQuerySpecification;
-import hu.bme.mit.inf.telecare.simplified.model.query.util.DataflowQuerySpecification;
-import hu.bme.mit.inf.telecare.simplified.model.query.util.FinishQuerySpecification;
-import hu.bme.mit.inf.telecare.simplified.model.query.util.InitQuerySpecification;
-import hu.bme.mit.inf.telecare.simplified.model.query.util.SrcQuerySpecification;
-import hu.bme.mit.inf.telecare.simplified.model.query.util.TrgQuerySpecification;
+import hu.bme.mit.inf.telecare.simplified.generator.query.ActionMatch;
+import hu.bme.mit.inf.telecare.simplified.generator.query.AfterExtendedAMatch;
+import hu.bme.mit.inf.telecare.simplified.generator.query.AfterExtendedBMatch;
+import hu.bme.mit.inf.telecare.simplified.generator.query.AfterMatch;
+import hu.bme.mit.inf.telecare.simplified.generator.query.DataflowExtendedMatch;
+import hu.bme.mit.inf.telecare.simplified.generator.query.DataflowMatch;
+import hu.bme.mit.inf.telecare.simplified.generator.query.FinishMatch;
+import hu.bme.mit.inf.telecare.simplified.generator.query.InitMatch;
+import hu.bme.mit.inf.telecare.simplified.generator.query.SrcMatch;
+import hu.bme.mit.inf.telecare.simplified.generator.query.TrgMatch;
+import hu.bme.mit.inf.telecare.simplified.generator.query.util.ActionQuerySpecification;
+import hu.bme.mit.inf.telecare.simplified.generator.query.util.AfterExtendedAQuerySpecification;
+import hu.bme.mit.inf.telecare.simplified.generator.query.util.AfterExtendedBQuerySpecification;
+import hu.bme.mit.inf.telecare.simplified.generator.query.util.AfterQuerySpecification;
+import hu.bme.mit.inf.telecare.simplified.generator.query.util.DataflowExtendedQuerySpecification;
+import hu.bme.mit.inf.telecare.simplified.generator.query.util.DataflowQuerySpecification;
+import hu.bme.mit.inf.telecare.simplified.generator.query.util.FinishQuerySpecification;
+import hu.bme.mit.inf.telecare.simplified.generator.query.util.InitQuerySpecification;
+import hu.bme.mit.inf.telecare.simplified.generator.query.util.SrcQuerySpecification;
+import hu.bme.mit.inf.telecare.simplified.generator.query.util.TrgQuerySpecification;
+import telecare.Host;
+import telecare.Measure;
+import telecare.MeasurementType;
+import telecare.NamedElement;
+import telecare.PeriodicTrigger;
+import telecare.Report;
 import telecare.TelecareFactory;
 import telecare.TelecarePackage;
 import telecare.TelecareSystem;
 
 public class ChangeGenerator {
 
-	private static final Random RANDOM = new Random();
+//	private static final Random RANDOM = new Random();
 
-	private Resource resource;
-	
 	private Set<IQuerySpecification<?>> objRules;
 	private Set<IQuerySpecification<?>> refRules;
 	private Set<IQuerySpecification<?>> extendedRules;
-
+	
 	private Multimap<Object, IPatternMatch> traceO;
 	private Multimap<Object, IPatternMatch> traceF;
 	private Multimap<Object, IPatternMatch> traceE;
@@ -64,19 +62,23 @@ public class ChangeGenerator {
 	
 	@SuppressWarnings("unused")
 	private TelecarePackage ePackage;
-	@SuppressWarnings("unused")
 	private TelecareFactory eFactory;
 	
-	private ChangeGenerator() {
-	}
-	
-	public ChangeGenerator(int changeSize, TelecareSystem system) throws Exception {
+	public ChangeGenerator(int changeSize, TelecareSystem system, Collection<ChangeTypes> changeTypes) throws Exception {
 		
-		model = new CategorizedModel(null,system);
+		ePackage = TelecarePackage.eINSTANCE;
+		eFactory = TelecareFactory.eINSTANCE;
+		
+		model = new CategorizedModel(system);
 		
 		initialize();
-		buildTraceability();		
-		introduceChanges(changeSize);
+		buildTraceability();
+		if(changeTypes.contains(ChangeTypes.AddNewActivationWithNewEdgeToReportAndPeriodicTrigger))
+			introduceChanges(changeSize, ChangeTypes.AddNewActivationWithNewEdgeToReportAndPeriodicTrigger);
+		if(changeTypes.contains(ChangeTypes.RemoveHostWithEdgesAddNewEdgesToOtherHost))
+			introduceChanges(changeSize, ChangeTypes.RemoveHostWithEdgesAddNewEdgesToOtherHost);
+		if(changeTypes.contains(ChangeTypes.RemoveInformationTypeWithEdges))
+			introduceChanges(changeSize, ChangeTypes.RemoveInformationTypeWithEdges);
 		
 		model.yedOriginal = calculateYed();
 		model.yedModified = calculateYedColored();
@@ -85,50 +87,19 @@ public class ChangeGenerator {
 	public CategorizedModel getModel() {
 		return model;
 	}
-	
-	public static void main(String[] args) throws Exception {
-		ChangeGenerator generator = new ChangeGenerator();
-		
-		generator.ePackage = TelecarePackage.eINSTANCE;
-		generator.eFactory = TelecareFactory.eINSTANCE;
-		
-		Resource.Factory.Registry.INSTANCE.getExtensionToFactoryMap().put("xmi", new XMIResourceFactoryImpl());
-		generator.loadResource(args[0]);
-		generator.model = new CategorizedModel(generator.resource,(TelecareSystem) generator.resource.getContents().get(0));
-		
-		generator.initialize();
-		generator.buildTraceability();		
-		generator.introduceChanges(Integer.valueOf(args[1]));
-		
-		System.out.println("Delete object match");
-		System.out.println(generator.model.objRemoval);
-		System.out.println("Delete don't care matches");
-		System.out.println(generator.model.dontCareRemoval);
-		System.out.println("Delete edge match");
-		System.out.println(generator.model.refRemoval);
-		System.out.println("Changeable Part");
-		System.out.println(generator.model.changeblePart);
-		System.out.println("Removable Part");
-		System.out.println(generator.model.removablePart);
-		
-		CharSequence sequence = generator.calculateYedColored();
-		String file = generator.resource.getURI().toFileString();
-		file += ".changed-"+args[1]+".gml";
-		
-		PrintWriter writer = new PrintWriter(file, "UTF-8");
-		writer.print(sequence.toString());
-		writer.close();
- 	}
 
 	private CharSequence calculateYed() {
 		Model2Yed yed = new Model2Yed();
-		CharSequence sequence = yed.transform(Lists.newArrayList(resource.getAllContents()));
+		CharSequence sequence = yed.transform(Lists.newArrayList(model.system.eAllContents()));
 		return sequence;
 	}
 	
 	private CharSequence calculateYedColored() {
 		Model2Yed yed = new Model2Yed();
-		CharSequence sequence = yed.transform(Lists.newArrayList(resource.getAllContents()), model.changeblePart, model.removablePart);
+		ArrayList<EObject> objects = Lists.newArrayList(model.system.eAllContents());
+		objects.add(model.system);
+		objects.addAll(model.newObjects);
+		CharSequence sequence = yed.transform(objects, model.changeblePart, model.removablePart, model.newObjects);
 		return sequence;
 	}
 
@@ -156,17 +127,83 @@ public class ChangeGenerator {
 		traceE = TraceabilityModel.calculateTraceList(model.system, extendedRules);
 	}
 
-	private void introduceChanges(int numberOfChanges) throws UnexpectedException {
+	private void introduceChanges(int numberOfChanges, ChangeTypes type) throws Exception {
 		for(int i = 0; i < numberOfChanges; i++) {
-			IPatternMatch objRemoval = getArbitraryFromSet(traceO.values().stream().filter(x -> !(x instanceof InitMatch) && !(x instanceof FinishMatch)).collect(Collectors.toList()));
-			model.objRemoval.add(objRemoval);
-			removeObjectMatch(model, objRemoval);
-			
-			IPatternMatch refRemoval = getArbitraryFromSet(traceF.values());
-			model.refRemoval.add(refRemoval);
-			removeReferenceMatch(model, refRemoval);
+			switch (type) {			
+			case AddNewActivationWithNewEdgeToReportAndPeriodicTrigger:
+				introduceAddNewActivationWithNewEdgeToReportAndPeriodicTrigger(i);
+				break;
+			case RemoveHostWithEdgesAddNewEdgesToOtherHost:
+				introduceRemoveHostWithEdgesAddNewEdgesToOtherHost(i);
+				break;
+			case RemoveInformationTypeWithEdges:
+				introduceRemoveInformationTypeWithEdges(i);
+				break;
+			default:
+				break;
+			}
 		}
 	}
+	
+	private void introduceRemoveInformationTypeWithEdges(int i) {
+		IPatternMatch objRemoval = traceO.values().stream().filter(x -> x instanceof SrcMatch).findFirst().get();
+		model.objRemoval.add(objRemoval);
+		removeObjectMatch(model, objRemoval);
+	}
+	
+	private void introduceRemoveHostWithEdgesAddNewEdgesToOtherHost(int i) throws Exception {
+		IPatternMatch hostMatch = traceO.values().stream().filter(x -> x instanceof TrgMatch).findFirst().get();
+		
+		Collection<IPatternMatch> dataflows = traceF.values().stream().filter(x -> x instanceof DataflowMatch && x.get(1) == hostMatch.get(0)).collect(Collectors.toList());
+		for (IPatternMatch removal : dataflows) {
+			removeReferenceMatch(model, removal);
+		}
+		
+		Collection<MeasurementType> measurementTypes = dataflows.stream().map(y -> (MeasurementType)y.get(0)).collect(Collectors.toList());
+		for (MeasurementType measurementType : measurementTypes) {
+			Host host = (Host)traceO.keySet().stream().filter(x -> x instanceof Host).findFirst().get();
+			DataflowMatch newReferenceMatchFromMeasurementToHost = DataflowQuerySpecification.instance().newEmptyMatch();
+			newReferenceMatchFromMeasurementToHost.setHost(host);
+			newReferenceMatchFromMeasurementToHost.setType(measurementType);
+		}
+		model.objRemoval.add(hostMatch);
+		removeObjectMatch(model, hostMatch);
+	}
+	
+	private void introduceAddNewActivationWithNewEdgeToReportAndPeriodicTrigger(int i) throws Exception {
+		 Measure measure = eFactory.createMeasure();
+		 measure.setName("newMeasure_"+i);
+		 
+		 model.newObjects.add(measure);
+		 
+		 ActionMatch newObjectMatch = ActionQuerySpecification.instance().newEmptyMatch();
+		 newObjectMatch.setT(measure);
+		 
+		 AfterMatch newReferenceMatchToPeriodicTrigger = AfterQuerySpecification.instance().newEmptyMatch();
+		 newReferenceMatchToPeriodicTrigger.setA((NamedElement)traceO.keySet().stream().filter(x -> x instanceof PeriodicTrigger).findFirst().get());
+		 newReferenceMatchToPeriodicTrigger.setB(measure);
+	
+		 AfterMatch newReferenceMatchToReport = AfterQuerySpecification.instance().newEmptyMatch();
+		 newReferenceMatchToReport.setA(measure);
+		 newReferenceMatchToReport.setB((NamedElement)traceO.keySet().stream().filter(x -> x instanceof Report).findFirst().get());
+	
+		 model.objAddition.add(newObjectMatch);
+		 model.refAddition.add(newReferenceMatchToPeriodicTrigger);
+		 model.refAddition.add(newReferenceMatchToReport);
+		 
+	}
+	
+//	private void introduceChanges(int numberOfChanges) throws UnexpectedException {
+//		for(int i = 0; i < numberOfChanges; i++) {
+//			IPatternMatch objRemoval = getArbitraryFromSet(traceO.values().stream().filter(x -> !(x instanceof InitMatch) && !(x instanceof FinishMatch)).collect(Collectors.toList()));
+//			model.objRemoval.add(objRemoval);
+//			removeObjectMatch(model, objRemoval);
+//			
+//			IPatternMatch refRemoval = getArbitraryFromSet(traceF.values());
+//			model.refRemoval.add(refRemoval);
+//			removeReferenceMatch(model, refRemoval);
+//		}
+//	}
 
 	private void removeObjectMatch(CategorizedModel model, IPatternMatch removal) {
 		traceO.values().remove(removal);
@@ -174,11 +211,12 @@ public class ChangeGenerator {
 		for (String param : removal.parameterNames()) {
 			Object object = removal.get(param);
 			if(traceO.containsKey(object) || traceF.containsKey(object)) {
-				model.changeblePart.add(object);
+				if(!model.removablePart.contains(object))
+					model.changeblePart.add(object);
 			} else {
+				model.changeblePart.remove(object);
 				model.removablePart.add(object);
-			}
-				
+			}	
 		}
 	}
 
@@ -193,26 +231,28 @@ public class ChangeGenerator {
 			for (String param : match.parameterNames()) {
 				Object object = match.get(param);
 				if(traceO.containsKey(object) || traceF.containsKey(object)) {
-					model.changeblePart.add(object);
+					if(!model.removablePart.contains(object))
+						model.changeblePart.add(object);
 				} else {
+					model.changeblePart.remove(object);
 					model.removablePart.add(object);
 				}
 			}
 		}
 	}
 	
-	private IPatternMatch getArbitraryFromSet(Collection<IPatternMatch> matchSet) throws UnexpectedException {
-		int size = matchSet.size();
-		int item = RANDOM.nextInt(size); // In real life, the Random object should be rather more shared than this
-		int i = 0;
-		for(IPatternMatch obj : matchSet)
-		{
-		    if (i == item)
-		        return obj;
-		    i = i + 1;
-		}
-		throw new UnexpectedException("There no more matches in the set");
-	}
+//	private IPatternMatch getArbitraryFromSet(Collection<IPatternMatch> matchSet) throws UnexpectedException {
+//		int size = matchSet.size();
+//		int item = RANDOM.nextInt(size); // In real life, the Random object should be rather more shared than this
+//		int i = 0;
+//		for(IPatternMatch obj : matchSet)
+//		{
+//		    if (i == item)
+//		        return obj;
+//		    i = i + 1;
+//		}
+//		throw new UnexpectedException("There no more matches in the set");
+//	}
 	
 	private void removeDontCareMatches(CategorizedModel model, IPatternMatch match) {
 		if(match instanceof InitMatch || match instanceof FinishMatch || match instanceof ActionMatch) {
@@ -252,9 +292,23 @@ public class ChangeGenerator {
 		}
 	}
 	
-	private void loadResource(String path) {
-		ResourceSet rSet = new ResourceSetImpl();
-		resource = rSet.getResource(URI.createFileURI(path), true);
+//	private void loadResource(String path) {
+//		ResourceSet rSet = new ResourceSetImpl();
+//		resource = rSet.getResource(URI.createFileURI(path), true);
+//	}
+	
+	public Multimap<Object, IPatternMatch> getTraceO() {
+		return traceO;
+	}
+	
+	public Multimap<Object, IPatternMatch> getTraceF() {
+		return traceF;
+	}
+	
+	enum ChangeTypes {
+		RemoveInformationTypeWithEdges,
+		RemoveHostWithEdgesAddNewEdgesToOtherHost,
+		AddNewActivationWithNewEdgeToReportAndPeriodicTrigger
 	}
 	
 }

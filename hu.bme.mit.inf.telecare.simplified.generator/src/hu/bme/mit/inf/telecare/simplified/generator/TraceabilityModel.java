@@ -15,8 +15,6 @@ import telecare.TelecareSystem;
 
 public class TraceabilityModel {
 
-	public Multimap<Object, IPatternMatch> traceMap = ArrayListMultimap.create();
-	
 	@SuppressWarnings("deprecation")
 	public static Multimap<Object, IPatternMatch> calculateTraceList(TelecareSystem system, 
 			Collection<IQuerySpecification<?>> specifications) throws IncQueryException {
