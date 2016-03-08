@@ -8,8 +8,10 @@ import java.util.Set;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.incquery.runtime.api.IPatternMatch;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 
 import events.AbstractActivity;
@@ -38,7 +40,7 @@ public class CategorizedModel {
 	public final List<EObject> viewObjectsDataflow = Lists.newArrayList();
 	public final Map<EObject,EObject> mapDataflow = Maps.newHashMap();
 	public final List<EObject> viewObjectsEvents = Lists.newArrayList();
-	public final Map<EObject,AbstractActivity> mapEvents = Maps.newHashMap();
+	public final Multimap<EObject,AbstractActivity> mapEvents = ArrayListMultimap.create();
 	
 	
 	public CategorizedModel(TelecareSystem system) {

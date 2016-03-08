@@ -10,8 +10,8 @@ import hu.bme.mit.inf.telecare.simplified.generator.ChangeGenerator.ChangeTypes;
 
 public class Experiment {
 
-	private static final int MODEL_SIZE = 4;
-	private static final int CHANGE_SIZE = 2;
+	private static final int MODEL_SIZE = 1;
+	private static final int CHANGE_SIZE = 1;
 	private CategorizedModel result;
 	private ChangeGenerator changeGenerator;
 	private ModelGenerator modelGenerator;

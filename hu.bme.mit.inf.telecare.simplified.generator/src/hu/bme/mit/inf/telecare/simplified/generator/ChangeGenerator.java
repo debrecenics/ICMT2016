@@ -114,8 +114,8 @@ public class ChangeGenerator {
 		for (IPatternMatch match : referenceMatches) {
 			if(match instanceof AfterMatch) {
 				AfterMatch afterMatch = (AfterMatch) match;
-				AbstractActivity source = model.mapEvents.get(afterMatch.getA());
-				AbstractActivity target = model.mapEvents.get(afterMatch.getB());
+				AbstractActivity source = model.mapEvents.get(afterMatch.getA()).stream().filter(x -> x instanceof Init || x instanceof Activity).findFirst().get();
+				AbstractActivity target = model.mapEvents.get(afterMatch.getB()).stream().filter(x -> x instanceof Finish || x instanceof Activity).findFirst().get();
 				source.getAfter().add(target);
 			}
 			if(match instanceof DataflowMatch) {
@@ -149,14 +149,14 @@ public class ChangeGenerator {
 			}
 			if(match instanceof TrgMatch) {
 				dataflow.Host host = eDataflowFactory.createHost();
-				long i = model.viewObjectsEvents.stream().filter(x -> x instanceof dataflow.Host).count()+1;
+				long i = model.viewObjectsDataflow.stream().filter(x -> x instanceof dataflow.Host).count()+1;
 				host.setName("host_"+i);
 				model.viewObjectsDataflow.add(host);
 				model.mapDataflow.put(((TrgMatch) match).getHost(), host);
 			}
 			if(match instanceof SrcMatch) {
 				InformationType type = eDataflowFactory.createInformationType();
-				long i = model.viewObjectsEvents.stream().filter(x -> x instanceof InformationType).count()+1;
+				long i = model.viewObjectsDataflow.stream().filter(x -> x instanceof InformationType).count()+1;
 				type.setName("type_"+i);
 				model.viewObjectsDataflow.add(type);
 				model.mapDataflow.put(((SrcMatch) match).getType(), type);

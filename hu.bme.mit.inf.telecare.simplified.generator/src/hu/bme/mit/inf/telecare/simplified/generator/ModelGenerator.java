@@ -56,58 +56,61 @@ public class ModelGenerator {
 		//Sensor
 		Sensor sensor = eFactory.createSensor();
 		sensor.setName("sensor"+n);
-		//Measurement Types
-		MeasurementType typeA = eFactory.createMeasurementType();
-		typeA.setName("typeA_"+n);
-		MeasurementType typeB = eFactory.createMeasurementType();
-		typeB.setName("typeB_"+n);
-		//Hosts
-		Host hostA = eFactory.createHost();
-		hostA.setName("hostA_"+n);
-		Host hostB = eFactory.createHost();
-		hostB.setName("hostB_"+n);
-		//Periodic Trigger
-		PeriodicTrigger periodicTrigger = eFactory.createPeriodicTrigger();
-		periodicTrigger.setName("periodicTrigger_"+n);
-		//Generate Dynamic parts
-		for(int i = 0; i < n; i++) {
-			//Report
-			Report report = eFactory.createReport();
-			report.setName("report_"+(i+1)+"_"+n);
-			if(i % 2 == 0) {
-				report.setWhere(hostA);
-			} else {
-				report.setWhere(hostB);
-			}
-			//All measurements finished trigger
-			EventFinishedTrigger allMeasurementFinishedTrigger = eFactory.createEventFinishedTrigger();
-			allMeasurementFinishedTrigger.setName("measurementsFinished_"+(i+1)+"_"+n);
-			for(int j = 0; j < 4; j++) {
-				//Measurements
-				Measure measure = eFactory.createMeasure();
-				measure.setName("measure"+mapIntToChar[j]+"_"+(i+1)+"_"+n);
-				measure.setWhen(periodicTrigger);
-				if(j % 2 == 0) {
-					measure.setType(typeA);
+		for(int k = 0; k < n; k++) {
+			//Measurement Types
+			MeasurementType typeA = eFactory.createMeasurementType();
+			typeA.setName("typeA_"+k+"_"+n);
+			MeasurementType typeB = eFactory.createMeasurementType();
+			typeB.setName("typeB_"+k+"_"+n);
+			//Hosts
+			Host hostA = eFactory.createHost();
+			hostA.setName("hostA_"+k+"_"+n);
+			Host hostB = eFactory.createHost();
+			hostB.setName("hostB_"+k+"_"+n);
+			//Periodic Trigger
+			PeriodicTrigger periodicTrigger = eFactory.createPeriodicTrigger();
+			periodicTrigger.setName("periodicTrigger_"+k+"_"+n);
+			//Generate Dynamic parts
+			for(int i = 0; i < 2; i++) {
+				//Report
+				Report report = eFactory.createReport();
+				report.setName("report_"+k+"_"+(i+1)+"_"+n);
+				if(i % 2 == 0) {
+					report.setWhere(hostA);
 				} else {
-					measure.setType(typeB);
+					report.setWhere(hostB);
 				}
-				report.getWhat().add(measure);
-				allMeasurementFinishedTrigger.getTriggeredBy().add(measure);
-				sensor.getActions().add(measure);
-				//EventFinishedTriggers
+				//All measurements finished trigger
+				EventFinishedTrigger allMeasurementFinishedTrigger = eFactory.createEventFinishedTrigger();
+				allMeasurementFinishedTrigger.setName("measurementsFinished_"+(i+1)+"_"+n);
+				for(int j = 0; j < 2; j++) {
+					//Measurements
+					Measure measure = eFactory.createMeasure();
+					measure.setName("measure"+mapIntToChar[j]+"_"+k+"_"+(i+1)+"_"+n);
+					measure.setWhen(periodicTrigger);
+					if(j % 2 == 0) {
+						measure.setType(typeA);
+					} else {
+						measure.setType(typeB);
+					}
+					report.getWhat().add(measure);
+					allMeasurementFinishedTrigger.getTriggeredBy().add(measure);
+					sensor.getActions().add(measure);
+					//EventFinishedTriggers
+				}
+				report.setWhen(allMeasurementFinishedTrigger);
+				sensor.getActions().add(report);
+				sensor.getTriggers().add(allMeasurementFinishedTrigger);
 			}
-			report.setWhen(allMeasurementFinishedTrigger);
-			sensor.getActions().add(report);
-			sensor.getTriggers().add(allMeasurementFinishedTrigger);
+			
+			sensor.getTriggers().add(periodicTrigger);
+			system.getHosts().add(hostA);
+			system.getHosts().add(hostB);
+			system.getMeasurementTypes().add(typeA);
+			system.getMeasurementTypes().add(typeB);
 		}
-		
-		sensor.getTriggers().add(periodicTrigger);
-		system.getHosts().add(hostA);
-		system.getHosts().add(hostB);
-		system.getMeasurementTypes().add(typeA);
-		system.getMeasurementTypes().add(typeB);
 		system.getSensors().add(sensor);
+		
 	}
 
 	
