@@ -12,7 +12,7 @@ public class Experiment {
 
 	private static final int MODEL_SIZE = 200;
 	private static final int CHANGE_SIZE = 30;
-	private CategorizedModel result;
+	public CategorizedModel result;
 	private ChangeGenerator changeGenerator;
 	private ModelGenerator modelGenerator;
 
