@@ -10,8 +10,8 @@ import hu.bme.mit.inf.telecare.simplified.generator.ChangeGenerator.ChangeTypes;
 
 public class Experiment {
 
-	private static final int MODEL_SIZE = 1;
-	private static final int CHANGE_SIZE = 1;
+	private static final int MODEL_SIZE = 200;
+	private static final int CHANGE_SIZE = 30;
 	private CategorizedModel result;
 	private ChangeGenerator changeGenerator;
 	private ModelGenerator modelGenerator;
@@ -24,6 +24,10 @@ public class Experiment {
 				experiment.getResult().yedEventsOriginal);
 		CategorizedModel.saveYed("/home/vialpando/Eclipse/AlloyGen/git/ICMT2016/hu.bme.mit.inf.telecare.simplified.generator/instances/experiment-dataflow-original-"+MODEL_SIZE+"-"+CHANGE_SIZE+".gml", 
 				experiment.getResult().yedDataflowOriginal);
+		CategorizedModel.saveYed("/home/vialpando/Eclipse/AlloyGen/git/ICMT2016/hu.bme.mit.inf.telecare.simplified.generator/instances/experiment-events-modified-"+MODEL_SIZE+"-"+CHANGE_SIZE+".gml", 
+				experiment.getResult().yedEventsModified);
+		CategorizedModel.saveYed("/home/vialpando/Eclipse/AlloyGen/git/ICMT2016/hu.bme.mit.inf.telecare.simplified.generator/instances/experiment-dataflow-modified-"+MODEL_SIZE+"-"+CHANGE_SIZE+".gml", 
+				experiment.getResult().yedDataflowModified);
 		CategorizedModel.saveYed("/home/vialpando/Eclipse/AlloyGen/git/ICMT2016/hu.bme.mit.inf.telecare.simplified.generator/instances/experiment-modified-"+MODEL_SIZE+"-"+CHANGE_SIZE+".gml", 
 				experiment.getResult().yedModified);
 		
@@ -42,6 +46,7 @@ public class Experiment {
 		System.out.println(experiment.result.removablePart);
 		System.out.println("New objects");
 		System.out.println(experiment.result.newObjects);
+		
 	}
 	
 	public Experiment(int modelSize, int changeSize) throws Exception {

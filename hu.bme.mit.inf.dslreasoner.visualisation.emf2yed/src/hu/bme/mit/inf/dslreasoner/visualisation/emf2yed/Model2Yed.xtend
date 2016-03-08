@@ -1,21 +1,22 @@
 package hu.bme.mit.inf.dslreasoner.visualisation.emf2yed
 
+import com.google.common.collect.Table
+import java.util.Collections
 import java.util.HashMap
 import java.util.List
 import java.util.Map
+import java.util.Set
 import org.eclipse.emf.ecore.EAttribute
 import org.eclipse.emf.ecore.EObject
 import org.eclipse.emf.ecore.EReference
-import java.util.Set
-import java.util.Collections
 
 class Model2Yed{
 	
 	def public transform(List<EObject> model) {
-		transform(model, Collections.emptySet, Collections.emptySet, Collections.emptySet)
+		transform(model, Collections.emptySet, Collections.emptySet, Collections.emptySet, null, null)
 	}
 	
-	def public transform(List<EObject> model, Set<Object> yellow, Set<Object> red, Set<EObject> green) {
+	def public transform(List<EObject> model, Set<Object> yellow, Set<Object> red, Set<EObject> green, Table<EObject,EObject,EReference> addEdges, Table<EObject,EObject,EReference> delEdges) {
 		val Map<EObject, Integer> objectToID = new HashMap
 		
 		'''
@@ -29,13 +30,18 @@ class Model2Yed{
 				«FOR reference:from.eClass.EAllReferences»
 					«IF reference.isMany»
 					«FOR target : from.eGet(reference) as List<EObject>»
-						«reference.transformRelation(from,target,objectToID)»
+						«reference.transformRelation(from,target,objectToID, addEdges, delEdges)»
 					«ENDFOR»
 					«ELSE»
-						«reference.transformRelation(from,from.eGet(reference) as EObject,objectToID)»
+						«reference.transformRelation(from,from.eGet(reference) as EObject,objectToID, addEdges, delEdges)»
 					«ENDIF»
 				«ENDFOR»
 			«ENDFOR»
+			«IF addEdges != null && !addEdges.empty»
+			«FOR cell:addEdges.cellSet»
+				«cell.value.transformRelation(cell.rowKey,cell.columnKey,objectToID,addEdges,delEdges)»
+			«ENDFOR»
+			«ENDIF»
 		]
 		'''
 	}
@@ -128,9 +134,15 @@ class Model2Yed{
 		else return '''«value»'''
 	}
 	
+	def protected color(EReference ref, EObject row, EObject column, Table<EObject,EObject,EReference> addEdges, Table<EObject,EObject,EReference> delEdges) {
+		if(addEdges != null && addEdges.get(row,column) == ref)
+			return "#00FF00"
+		if(delEdges != null && delEdges.get(row,column) == ref)
+			return "#FF0000"
+		return "#000000"
+	}
 	
-	
-	def protected transformRelation(EReference reference, EObject source, EObject target,Map<EObject, Integer> objectToID){
+	def protected transformRelation(EReference reference, EObject source, EObject target,Map<EObject, Integer> objectToID, Table<EObject,EObject,EReference> addEdges, Table<EObject,EObject,EReference> delEdges){
 		if(source!=null && target!=null) {
 			'''
 			edge
@@ -139,7 +151,10 @@ class Model2Yed{
 				target	«objectToID.get(target)»
 				graphics
 				[
-					fill	"#000000"
+					« IF (addEdges != null && addEdges.get(source,target) == reference) || (delEdges != null && delEdges.get(source,target) == reference)»
+					style	"dashed"
+					«ENDIF»
+					fill	"«color(reference, source, target, addEdges, delEdges)»"
 					«IF reference.containment»
 						width	3
 					«ENDIF»
@@ -147,7 +162,8 @@ class Model2Yed{
 				]
 				LabelGraphics
 				[
-					text	"«reference.name»"
+					text	"«IF(delEdges != null && delEdges.get(source,target) == reference)»«'«'»del«'»'»«ENDIF»«IF(addEdges != null && addEdges.get(source,target) == reference)»«'«'»new«'»'»«ENDIF»«reference.name»"
+					color	"«color(reference, source, target, addEdges, delEdges)»"
 					fontSize	14
 					fontName	"Consolas"
 					configuration	"AutoFlippingLabel"

@@ -2,6 +2,7 @@ package hu.bme.mit.inf.telecare.simplified.generator;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -69,15 +70,11 @@ public class ChangeGenerator {
 
 	private CategorizedModel model;
 	
-	
-	
 	@SuppressWarnings("unused")
 	private TelecarePackage eTelecarePackage;
 	private TelecareFactory eTelecareFactory;
-	@SuppressWarnings("unused")
 	private DataflowPackage eDataflowPackage;
 	private DataflowFactory eDataflowFactory;
-	@SuppressWarnings("unused")
 	private EventsPackage eEventsPackage;
 	private EventsFactory eEventsFactory;
 	
@@ -102,13 +99,54 @@ public class ChangeGenerator {
 			introduceChanges(changeSize, ChangeTypes.RemoveHostWithEdgesAddNewEdgesToOtherHost);
 		if(changeTypes.contains(ChangeTypes.RemoveInformationTypeWithEdges))
 			introduceChanges(changeSize, ChangeTypes.RemoveInformationTypeWithEdges);
+		buildModifiedViewModels();
 		
 		model.yedOriginal = calculateYed();
 		model.yedEventsOriginal = calculateEventsYed();
 		model.yedDataflowOriginal = calculateDataflowYed();
+		model.yedEventsModified = calculateEventYedColored();
+		model.yedDataflowModified = calculateDataflowYedColored();
 		model.yedModified = calculateYedColored();
 	}
 	
+	private void buildModifiedViewModels() {
+		for(IPatternMatch match : model.objAddition) {
+			if(match instanceof ActionMatch) {
+				Activity activity = eEventsFactory.createActivity();
+				long i = model.viewNewObjectsEvents.stream().filter(x -> x instanceof Activity).count()+1;
+				activity.setName("new_activity_"+i);
+				model.viewNewObjectsEvents.add(activity);
+				model.mapEvents.put(((ActionMatch) match).getT(), activity);
+			}
+		}
+		for(IPatternMatch match : model.objRemoval) {
+			if(match instanceof TrgMatch) {
+				dataflow.Host host = (dataflow.Host) model.mapDataflow.get(((TrgMatch) match).getHost());
+				model.viewDelObjectsDataflow.add(host);
+			}
+			if(match instanceof SrcMatch) {
+				InformationType type = (InformationType) model.mapDataflow.get(((SrcMatch) match).getType());
+				model.viewDelObjectsDataflow.add(type);
+			}
+		}
+		for(IPatternMatch match : model.refAddition) {
+			if(match instanceof AfterMatch) {
+				AfterMatch afterMatch = (AfterMatch) match;
+				AbstractActivity source = model.mapEvents.get(afterMatch.getA()).stream().filter(x -> x instanceof Init || x instanceof Activity).findFirst().get();
+				AbstractActivity target = model.mapEvents.get(afterMatch.getB()).stream().filter(x -> x instanceof Finish || x instanceof Activity).findFirst().get();
+				model.addEdgesEvents.put(source, target, eEventsPackage.getAbstractActivity_After());
+			}
+		}
+		for(IPatternMatch match : model.refRemoval) {
+			if(match instanceof DataflowMatch) {
+				DataflowMatch dataflowMatch = (DataflowMatch) match;
+				InformationType type = (InformationType) model.mapDataflow.get(dataflowMatch.getType());
+				dataflow.Host host = (dataflow.Host) model.mapDataflow.get(dataflowMatch.getHost());
+				model.delEdgesDataflow.put(type, host, eDataflowPackage.getInformationType_Dataflow());
+			}
+		}
+	}
+
 	private void buildViewModelReferences() {
 		Collection<IPatternMatch> referenceMatches = traceF.values();
 		for (IPatternMatch match : referenceMatches) {
@@ -174,9 +212,25 @@ public class ChangeGenerator {
 		return sequence;
 	}
 	
+	private CharSequence calculateDataflowYedColored() {
+		Model2Yed yed = new Model2Yed();
+		ArrayList<EObject> objects = Lists.newArrayList(model.viewObjectsDataflow);
+		objects.addAll(model.viewNewObjectsDataflow);
+		CharSequence sequence = yed.transform(objects, Collections.emptySet(), model.viewDelObjectsDataflow, model.viewNewObjectsDataflow, model.addEdgesDataflow, model.delEdgesDataflow);
+		return sequence;
+	}
+	
 	private CharSequence calculateEventsYed() {
 		Model2Yed yed = new Model2Yed();
 		CharSequence sequence = yed.transform(model.viewObjectsEvents);
+		return sequence;
+	}
+	
+	private CharSequence calculateEventYedColored() {
+		Model2Yed yed = new Model2Yed();
+		ArrayList<EObject> objects = Lists.newArrayList(model.viewObjectsEvents);
+		objects.addAll(model.viewNewObjectsEvents);
+		CharSequence sequence = yed.transform(objects, Collections.emptySet(), model.viewDelObjectsEvents, model.viewNewObjectsEvents, model.addEdgesEvents, model.delEdgesEvents);
 		return sequence;
 	}
 	
@@ -190,10 +244,10 @@ public class ChangeGenerator {
 	
 	private CharSequence calculateYedColored() {
 		Model2Yed yed = new Model2Yed();
-		ArrayList<EObject> objects = Lists.newArrayList(model.system.eAllContents());
+		List<EObject> objects = Lists.newArrayList(model.system.eAllContents());
 		objects.add(model.system);
 		objects.addAll(model.newObjects);
-		CharSequence sequence = yed.transform(objects, model.changeblePart, model.removablePart, model.newObjects);
+		CharSequence sequence = yed.transform(objects, model.changeblePart, model.removablePart, model.newObjects, null, null);
 		return sequence;
 	}
 
@@ -250,6 +304,7 @@ public class ChangeGenerator {
 		
 		Collection<IPatternMatch> dataflows = traceF.values().stream().filter(x -> x instanceof DataflowMatch && x.get(1) == hostMatch.get(0)).collect(Collectors.toList());
 		for (IPatternMatch removal : dataflows) {
+			model.refRemoval.add(removal);
 			removeReferenceMatch(model, removal);
 		}
 		
@@ -259,6 +314,8 @@ public class ChangeGenerator {
 			DataflowMatch newReferenceMatchFromMeasurementToHost = DataflowQuerySpecification.instance().newEmptyMatch();
 			newReferenceMatchFromMeasurementToHost.setHost(host);
 			newReferenceMatchFromMeasurementToHost.setType(measurementType);
+			if(!traceF.values().stream().filter(x -> x instanceof DataflowMatch).map(y -> (DataflowMatch)y).anyMatch(z -> z.getHost() == host && z.getType() == measurementType))
+				model.refAddition.add(newReferenceMatchFromMeasurementToHost);
 		}
 		model.objRemoval.add(hostMatch);
 		removeObjectMatch(model, hostMatch);

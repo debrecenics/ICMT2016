@@ -56,6 +56,9 @@ public class ModelGenerator {
 		//Sensor
 		Sensor sensor = eFactory.createSensor();
 		sensor.setName("sensor"+n);
+		//Periodic Trigger
+		PeriodicTrigger periodicTrigger = eFactory.createPeriodicTrigger();
+		periodicTrigger.setName("periodicTrigger_"+n);
 		for(int k = 0; k < n; k++) {
 			//Measurement Types
 			MeasurementType typeA = eFactory.createMeasurementType();
@@ -67,9 +70,6 @@ public class ModelGenerator {
 			hostA.setName("hostA_"+k+"_"+n);
 			Host hostB = eFactory.createHost();
 			hostB.setName("hostB_"+k+"_"+n);
-			//Periodic Trigger
-			PeriodicTrigger periodicTrigger = eFactory.createPeriodicTrigger();
-			periodicTrigger.setName("periodicTrigger_"+k+"_"+n);
 			//Generate Dynamic parts
 			for(int i = 0; i < 2; i++) {
 				//Report
@@ -103,12 +103,12 @@ public class ModelGenerator {
 				sensor.getTriggers().add(allMeasurementFinishedTrigger);
 			}
 			
-			sensor.getTriggers().add(periodicTrigger);
 			system.getHosts().add(hostA);
 			system.getHosts().add(hostB);
 			system.getMeasurementTypes().add(typeA);
 			system.getMeasurementTypes().add(typeB);
 		}
+		sensor.getTriggers().add(periodicTrigger);
 		system.getSensors().add(sensor);
 		
 	}

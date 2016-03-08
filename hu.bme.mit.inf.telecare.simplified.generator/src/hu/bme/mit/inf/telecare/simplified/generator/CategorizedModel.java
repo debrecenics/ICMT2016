@@ -6,13 +6,16 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.emf.ecore.EObject;
+import org.eclipse.emf.ecore.EReference;
 import org.eclipse.incquery.runtime.api.IPatternMatch;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+import com.google.common.collect.Table;
 
 import events.AbstractActivity;
 import telecare.TelecareSystem;
@@ -34,13 +37,23 @@ public class CategorizedModel {
 	public CharSequence yedOriginal;
 	public CharSequence yedModified;
 	public CharSequence yedEventsOriginal;
+	public CharSequence yedEventsModified;
 	public CharSequence yedDataflowOriginal;
+	public CharSequence yedDataflowModified;
 	public final TelecareSystem system;
 	
 	public final List<EObject> viewObjectsDataflow = Lists.newArrayList();
 	public final Map<EObject,EObject> mapDataflow = Maps.newHashMap();
 	public final List<EObject> viewObjectsEvents = Lists.newArrayList();
 	public final Multimap<EObject,AbstractActivity> mapEvents = ArrayListMultimap.create();
+	public final Set<EObject> viewNewObjectsEvents = Sets.newHashSet();
+	public final Set<EObject> viewNewObjectsDataflow = Sets.newHashSet();
+	public final Set<Object> viewDelObjectsEvents = Sets.newHashSet();
+	public final Set<Object> viewDelObjectsDataflow = Sets.newHashSet();
+	public final Table<EObject,EObject,EReference> addEdgesEvents = HashBasedTable.create();
+	public final Table<EObject,EObject,EReference> addEdgesDataflow= HashBasedTable.create();
+	public final Table<EObject,EObject,EReference> delEdgesEvents = HashBasedTable.create();
+	public final Table<EObject,EObject,EReference> delEdgesDataflow = HashBasedTable.create();
 	
 	
 	public CategorizedModel(TelecareSystem system) {
