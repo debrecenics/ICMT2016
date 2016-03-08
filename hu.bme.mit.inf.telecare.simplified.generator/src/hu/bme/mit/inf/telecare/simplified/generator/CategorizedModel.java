@@ -1,13 +1,18 @@
 package hu.bme.mit.inf.telecare.simplified.generator;
 
 import java.io.PrintWriter;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.incquery.runtime.api.IPatternMatch;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import events.AbstractActivity;
 import telecare.TelecareSystem;
 
 public class CategorizedModel {
@@ -26,7 +31,15 @@ public class CategorizedModel {
 	
 	public CharSequence yedOriginal;
 	public CharSequence yedModified;
+	public CharSequence yedEventsOriginal;
+	public CharSequence yedDataflowOriginal;
 	public final TelecareSystem system;
+	
+	public final List<EObject> viewObjectsDataflow = Lists.newArrayList();
+	public final Map<EObject,EObject> mapDataflow = Maps.newHashMap();
+	public final List<EObject> viewObjectsEvents = Lists.newArrayList();
+	public final Map<EObject,AbstractActivity> mapEvents = Maps.newHashMap();
+	
 	
 	public CategorizedModel(TelecareSystem system) {
 		this.system = system;

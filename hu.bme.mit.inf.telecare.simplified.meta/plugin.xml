@@ -7,11 +7,28 @@
 <plugin>
 
    <extension point="org.eclipse.emf.ecore.generated_package">
+      <!-- @generated common -->
+      <package
+            uri="hu.bme.mit.inf.dataflow"
+            class="dataflow.DataflowPackage"
+            genModel="model/common.genmodel"/>
+   </extension>
+
+
+   <extension point="org.eclipse.emf.ecore.generated_package">
+      <!-- @generated common -->
+      <package
+            uri="hu.bme.mit.inf.telecare.events"
+            class="events.EventsPackage"
+            genModel="model/common.genmodel"/>
+   </extension>
+   <extension point="org.eclipse.emf.ecore.generated_package">
       <!-- @generated tele -->
       <package
             uri="hu.bme.mit.inf.telecare"
             class="telecare.TelecarePackage"
-            genModel="model/tele.genmodel"/>
+            genModel="model/common.genmodel"/>
    </extension>
+
 
 </plugin>

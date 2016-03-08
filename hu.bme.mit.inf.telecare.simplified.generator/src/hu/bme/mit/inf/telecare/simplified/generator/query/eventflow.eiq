@@ -16,6 +16,7 @@ pattern finish(t) {
 
 pattern after(a,b) {
 	Action.when(b,a);
+	PeriodicTrigger(a);	
 } or {
 	Action.when(b,t);
 	EventFinishedTrigger.triggeredBy(t,a);

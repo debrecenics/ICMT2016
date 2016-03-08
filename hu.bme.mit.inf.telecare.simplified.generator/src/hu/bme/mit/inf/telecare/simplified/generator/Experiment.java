@@ -18,6 +18,12 @@ public class Experiment {
 
 	public static void main(String[] args) throws Exception {
 		Experiment experiment = new Experiment(MODEL_SIZE, CHANGE_SIZE);
+		CategorizedModel.saveYed("/home/vialpando/Eclipse/AlloyGen/git/ICMT2016/hu.bme.mit.inf.telecare.simplified.generator/instances/experiment-original-"+MODEL_SIZE+"-"+CHANGE_SIZE+".gml", 
+				experiment.getResult().yedOriginal);
+		CategorizedModel.saveYed("/home/vialpando/Eclipse/AlloyGen/git/ICMT2016/hu.bme.mit.inf.telecare.simplified.generator/instances/experiment-events-original-"+MODEL_SIZE+"-"+CHANGE_SIZE+".gml", 
+				experiment.getResult().yedEventsOriginal);
+		CategorizedModel.saveYed("/home/vialpando/Eclipse/AlloyGen/git/ICMT2016/hu.bme.mit.inf.telecare.simplified.generator/instances/experiment-dataflow-original-"+MODEL_SIZE+"-"+CHANGE_SIZE+".gml", 
+				experiment.getResult().yedDataflowOriginal);
 		CategorizedModel.saveYed("/home/vialpando/Eclipse/AlloyGen/git/ICMT2016/hu.bme.mit.inf.telecare.simplified.generator/instances/experiment-modified-"+MODEL_SIZE+"-"+CHANGE_SIZE+".gml", 
 				experiment.getResult().yedModified);
 		

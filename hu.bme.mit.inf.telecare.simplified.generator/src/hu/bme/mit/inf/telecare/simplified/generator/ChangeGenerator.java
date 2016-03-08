@@ -15,6 +15,15 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 
+import dataflow.DataflowFactory;
+import dataflow.DataflowPackage;
+import dataflow.InformationType;
+import events.AbstractActivity;
+import events.Activity;
+import events.EventsFactory;
+import events.EventsPackage;
+import events.Finish;
+import events.Init;
 import hu.bme.mit.inf.dslreasoner.visualisation.emf2yed.Model2Yed;
 import hu.bme.mit.inf.telecare.simplified.generator.query.ActionMatch;
 import hu.bme.mit.inf.telecare.simplified.generator.query.AfterExtendedAMatch;
@@ -60,19 +69,33 @@ public class ChangeGenerator {
 
 	private CategorizedModel model;
 	
+	
+	
 	@SuppressWarnings("unused")
-	private TelecarePackage ePackage;
-	private TelecareFactory eFactory;
+	private TelecarePackage eTelecarePackage;
+	private TelecareFactory eTelecareFactory;
+	@SuppressWarnings("unused")
+	private DataflowPackage eDataflowPackage;
+	private DataflowFactory eDataflowFactory;
+	@SuppressWarnings("unused")
+	private EventsPackage eEventsPackage;
+	private EventsFactory eEventsFactory;
 	
 	public ChangeGenerator(int changeSize, TelecareSystem system, Collection<ChangeTypes> changeTypes) throws Exception {
 		
-		ePackage = TelecarePackage.eINSTANCE;
-		eFactory = TelecareFactory.eINSTANCE;
+		eTelecarePackage = TelecarePackage.eINSTANCE;
+		eTelecareFactory = TelecareFactory.eINSTANCE;
+		eDataflowPackage = DataflowPackage.eINSTANCE;
+		eDataflowFactory = DataflowFactory.eINSTANCE;
+		eEventsPackage = EventsPackage.eINSTANCE;
+		eEventsFactory = EventsFactory.eINSTANCE;
 		
 		model = new CategorizedModel(system);
 		
 		initialize();
 		buildTraceability();
+		buildViewModelObjects();
+		buildViewModelReferences();
 		if(changeTypes.contains(ChangeTypes.AddNewActivationWithNewEdgeToReportAndPeriodicTrigger))
 			introduceChanges(changeSize, ChangeTypes.AddNewActivationWithNewEdgeToReportAndPeriodicTrigger);
 		if(changeTypes.contains(ChangeTypes.RemoveHostWithEdgesAddNewEdgesToOtherHost))
@@ -81,16 +104,87 @@ public class ChangeGenerator {
 			introduceChanges(changeSize, ChangeTypes.RemoveInformationTypeWithEdges);
 		
 		model.yedOriginal = calculateYed();
+		model.yedEventsOriginal = calculateEventsYed();
+		model.yedDataflowOriginal = calculateDataflowYed();
 		model.yedModified = calculateYedColored();
 	}
 	
+	private void buildViewModelReferences() {
+		Collection<IPatternMatch> referenceMatches = traceF.values();
+		for (IPatternMatch match : referenceMatches) {
+			if(match instanceof AfterMatch) {
+				AfterMatch afterMatch = (AfterMatch) match;
+				AbstractActivity source = model.mapEvents.get(afterMatch.getA());
+				AbstractActivity target = model.mapEvents.get(afterMatch.getB());
+				source.getAfter().add(target);
+			}
+			if(match instanceof DataflowMatch) {
+				DataflowMatch dataflowMatch = (DataflowMatch) match;
+				InformationType type = (InformationType) model.mapDataflow.get(dataflowMatch.getType());
+				dataflow.Host host = (dataflow.Host) model.mapDataflow.get(dataflowMatch.getHost());
+				type.getDataflow().add(host);
+			}
+		}
+	}
+	
+	private void buildViewModelObjects() {
+		Collection<IPatternMatch> objectMatches = traceO.values();
+		for (IPatternMatch match : objectMatches) {
+			if(match instanceof ActionMatch) {
+				Activity activity = eEventsFactory.createActivity();
+				long i = model.viewObjectsEvents.stream().filter(x -> x instanceof Activity).count()+1;
+				activity.setName("activity_"+i);
+				model.viewObjectsEvents.add(activity);
+				model.mapEvents.put(((ActionMatch) match).getT(), activity);
+			}
+			if(match instanceof InitMatch) {
+				Init init = eEventsFactory.createInit();
+				model.viewObjectsEvents.add(init);
+				model.mapEvents.put(((InitMatch) match).getT(), init);
+			}
+			if(match instanceof FinishMatch) {
+				Finish finish = eEventsFactory.createFinish();
+				model.viewObjectsEvents.add(finish);
+				model.mapEvents.put(((FinishMatch) match).getT(), finish);
+			}
+			if(match instanceof TrgMatch) {
+				dataflow.Host host = eDataflowFactory.createHost();
+				long i = model.viewObjectsEvents.stream().filter(x -> x instanceof dataflow.Host).count()+1;
+				host.setName("host_"+i);
+				model.viewObjectsDataflow.add(host);
+				model.mapDataflow.put(((TrgMatch) match).getHost(), host);
+			}
+			if(match instanceof SrcMatch) {
+				InformationType type = eDataflowFactory.createInformationType();
+				long i = model.viewObjectsEvents.stream().filter(x -> x instanceof InformationType).count()+1;
+				type.setName("type_"+i);
+				model.viewObjectsDataflow.add(type);
+				model.mapDataflow.put(((SrcMatch) match).getType(), type);
+			}
+		}
+	}
+
 	public CategorizedModel getModel() {
 		return model;
 	}
 
+	private CharSequence calculateDataflowYed() {
+		Model2Yed yed = new Model2Yed();
+		CharSequence sequence = yed.transform(model.viewObjectsDataflow);
+		return sequence;
+	}
+	
+	private CharSequence calculateEventsYed() {
+		Model2Yed yed = new Model2Yed();
+		CharSequence sequence = yed.transform(model.viewObjectsEvents);
+		return sequence;
+	}
+	
 	private CharSequence calculateYed() {
 		Model2Yed yed = new Model2Yed();
-		CharSequence sequence = yed.transform(Lists.newArrayList(model.system.eAllContents()));
+		ArrayList<EObject> objects = Lists.newArrayList(model.system.eAllContents());
+		objects.add(model.system);
+		CharSequence sequence = yed.transform(objects);
 		return sequence;
 	}
 	
@@ -171,8 +265,8 @@ public class ChangeGenerator {
 	}
 	
 	private void introduceAddNewActivationWithNewEdgeToReportAndPeriodicTrigger(int i) throws Exception {
-		 Measure measure = eFactory.createMeasure();
-		 measure.setName("newMeasure_"+i);
+		 Measure measure = eTelecareFactory.createMeasure();
+		 measure.setName("newAction_"+i);
 		 
 		 model.newObjects.add(measure);
 		 
