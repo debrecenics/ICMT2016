@@ -16,8 +16,20 @@ public class Experiment {
 	private ChangeGenerator changeGenerator;
 	private ModelGenerator modelGenerator;
 
+	public static final int[] MODEL_SIZES = {1,2,4,8,16,32,64,128,256};
+	public static final int[] CHANGE_SIZES = {1,2,4,8,16,32};
+	
 	public static void main(String[] args) throws Exception {
-		Experiment experiment = new Experiment(MODEL_SIZE, CHANGE_SIZE);
+		for (int modelSize : MODEL_SIZES) {
+			for (int changeSize : CHANGE_SIZES) {
+				if(changeSize < modelSize)					
+					execute(modelSize, changeSize);
+			}
+		}
+	}
+
+	private static void execute(int modelSize, int changeSize) throws Exception {
+		Experiment experiment = new Experiment(modelSize,changeSize);
 		CategorizedModel.saveYed("/home/vialpando/Eclipse/AlloyGen/git/ICMT2016/hu.bme.mit.inf.telecare.simplified.generator/instances/experiment-original-"+MODEL_SIZE+"-"+CHANGE_SIZE+".gml", 
 				experiment.getResult().yedOriginal);
 		CategorizedModel.saveYed("/home/vialpando/Eclipse/AlloyGen/git/ICMT2016/hu.bme.mit.inf.telecare.simplified.generator/instances/experiment-events-original-"+MODEL_SIZE+"-"+CHANGE_SIZE+".gml", 
@@ -46,7 +58,6 @@ public class Experiment {
 		System.out.println(experiment.result.removablePart);
 		System.out.println("New objects");
 		System.out.println(experiment.result.newObjects);
-		
 	}
 	
 	public Experiment(int modelSize, int changeSize) throws Exception {
