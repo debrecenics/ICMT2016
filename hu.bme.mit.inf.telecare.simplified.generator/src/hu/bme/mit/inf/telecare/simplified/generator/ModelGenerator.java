@@ -82,7 +82,7 @@ public class ModelGenerator {
 				}
 				//All measurements finished trigger
 				EventFinishedTrigger allMeasurementFinishedTrigger = eFactory.createEventFinishedTrigger();
-				allMeasurementFinishedTrigger.setName("measurementsFinished_"+(i+1)+"_"+n);
+				allMeasurementFinishedTrigger.setName("measurementsFinished_"+k+"_"+(i+1)+"_"+n);
 				for(int j = 0; j < 2; j++) {
 					//Measurements
 					Measure measure = eFactory.createMeasure();
