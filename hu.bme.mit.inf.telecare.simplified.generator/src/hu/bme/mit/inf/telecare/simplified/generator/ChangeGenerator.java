@@ -304,7 +304,11 @@ public class ChangeGenerator {
 		
 		Collection<IPatternMatch> dataflows = traceF.values().stream().filter(x -> x instanceof DataflowMatch && x.get(1) == hostMatch.get(0)).collect(Collectors.toList());
 		for (IPatternMatch removal : dataflows) {
-			model.refRemoval.add(removal);
+			if(model.refAddition.contains(removal)) {
+				model.refAddition.remove(removal);
+			} else {
+				model.refRemoval.add(removal);
+			}
 			removeReferenceMatch(model, removal);
 		}
 		
@@ -315,8 +319,10 @@ public class ChangeGenerator {
 			newReferenceMatchFromMeasurementToHost.setHost(host);
 			newReferenceMatchFromMeasurementToHost.setType(measurementType);
 			if(!traceF.values().stream().filter(x -> x instanceof DataflowMatch).map(y -> (DataflowMatch)y).anyMatch(z -> z.getHost() == host && z.getType() == measurementType))
-				model.refAddition.add(newReferenceMatchFromMeasurementToHost);
-		}
+				if(!model.refRemoval.contains(newReferenceMatchFromMeasurementToHost)) {
+					model.refAddition.add(newReferenceMatchFromMeasurementToHost);
+				}
+			}
 		model.objRemoval.add(hostMatch);
 		removeObjectMatch(model, hostMatch);
 	}
@@ -343,18 +349,6 @@ public class ChangeGenerator {
 		 model.refAddition.add(newReferenceMatchToReport);
 		 
 	}
-	
-//	private void introduceChanges(int numberOfChanges) throws UnexpectedException {
-//		for(int i = 0; i < numberOfChanges; i++) {
-//			IPatternMatch objRemoval = getArbitraryFromSet(traceO.values().stream().filter(x -> !(x instanceof InitMatch) && !(x instanceof FinishMatch)).collect(Collectors.toList()));
-//			model.objRemoval.add(objRemoval);
-//			removeObjectMatch(model, objRemoval);
-//			
-//			IPatternMatch refRemoval = getArbitraryFromSet(traceF.values());
-//			model.refRemoval.add(refRemoval);
-//			removeReferenceMatch(model, refRemoval);
-//		}
-//	}
 
 	private void removeObjectMatch(CategorizedModel model, IPatternMatch removal) {
 		traceO.values().remove(removal);
@@ -391,20 +385,7 @@ public class ChangeGenerator {
 			}
 		}
 	}
-	
-//	private IPatternMatch getArbitraryFromSet(Collection<IPatternMatch> matchSet) throws UnexpectedException {
-//		int size = matchSet.size();
-//		int item = RANDOM.nextInt(size); // In real life, the Random object should be rather more shared than this
-//		int i = 0;
-//		for(IPatternMatch obj : matchSet)
-//		{
-//		    if (i == item)
-//		        return obj;
-//		    i = i + 1;
-//		}
-//		throw new UnexpectedException("There no more matches in the set");
-//	}
-	
+
 	private void removeDontCareMatches(CategorizedModel model, IPatternMatch match) {
 		if(match instanceof InitMatch || match instanceof FinishMatch || match instanceof ActionMatch) {
 			Object object = match.get(0);
