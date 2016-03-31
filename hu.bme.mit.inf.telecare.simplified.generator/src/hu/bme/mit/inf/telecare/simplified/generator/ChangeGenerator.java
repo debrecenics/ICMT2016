@@ -99,6 +99,8 @@ public class ChangeGenerator {
 			introduceChanges(changeSize, ChangeTypes.RemoveHostWithEdgesAddNewEdgesToOtherHost);
 		if(changeTypes.contains(ChangeTypes.RemoveInformationTypeWithEdges))
 			introduceChanges(changeSize, ChangeTypes.RemoveInformationTypeWithEdges);
+		
+		model.refRemoval.addAll(model.dontCareRemoval);
 		buildModifiedViewModels();
 		
 		model.yedOriginal = calculateYed();
@@ -308,8 +310,8 @@ public class ChangeGenerator {
 				model.refAddition.remove(removal);
 			} else {
 				model.refRemoval.add(removal);
+				removeReferenceMatch(model, removal);
 			}
-			removeReferenceMatch(model, removal);
 		}
 		
 		Collection<MeasurementType> measurementTypes = dataflows.stream().map(y -> (MeasurementType)y.get(0)).collect(Collectors.toList());
@@ -318,11 +320,12 @@ public class ChangeGenerator {
 			DataflowMatch newReferenceMatchFromMeasurementToHost = DataflowQuerySpecification.instance().newEmptyMatch();
 			newReferenceMatchFromMeasurementToHost.setHost(host);
 			newReferenceMatchFromMeasurementToHost.setType(measurementType);
-			if(!traceF.values().stream().filter(x -> x instanceof DataflowMatch).map(y -> (DataflowMatch)y).anyMatch(z -> z.getHost() == host && z.getType() == measurementType))
+			if(!traceF.values().stream().filter(x -> x instanceof DataflowMatch).map(y -> (DataflowMatch)y).anyMatch(z -> z.getHost() == host && z.getType() == measurementType)) {
 				if(!model.refRemoval.contains(newReferenceMatchFromMeasurementToHost)) {
 					model.refAddition.add(newReferenceMatchFromMeasurementToHost);
 				}
 			}
+		}
 		model.objRemoval.add(hostMatch);
 		removeObjectMatch(model, hostMatch);
 	}
@@ -391,7 +394,10 @@ public class ChangeGenerator {
 			Object object = match.get(0);
 			List<IPatternMatch> dontCare = traceF.get(object).stream().filter(x -> x instanceof AfterMatch)
 									   .filter(y -> y.get(0) == object || y.get(1) == object).collect(Collectors.toList());
-			traceF.values().removeAll(dontCare);
+			//traceF.values().removeAll(dontCare);
+			for (IPatternMatch removal : dontCare) {
+				removeReferenceMatch(model, removal);
+			}
 			model.dontCareRemoval.addAll(dontCare);
 			List<IPatternMatch> dontCareExtended = traceE.get(object).stream().filter(x -> 
 																	x instanceof AfterExtendedAMatch ||
@@ -404,7 +410,10 @@ public class ChangeGenerator {
 			Object object = match.get(0);
 			List<IPatternMatch> dontCare = traceF.get(object).stream().filter(x -> x instanceof DataflowMatch)
 									   .filter(y -> y.get(1) == object).collect(Collectors.toList());
-			traceF.values().removeAll(dontCare);
+			//traceF.values().removeAll(dontCare);
+			for (IPatternMatch removal : dontCare) {
+				removeReferenceMatch(model, removal);
+			}
 			model.dontCareRemoval.addAll(dontCare);
 			List<IPatternMatch> dontCareExtended = traceE.get(object).stream().filter(x -> x instanceof DataflowExtendedMatch)
 									  .filter(y -> y.get(1) == object).collect(Collectors.toList());
@@ -415,7 +424,10 @@ public class ChangeGenerator {
 			Object object = match.get(0);
 			List<IPatternMatch> dontCare = traceF.get(object).stream().filter(x -> x instanceof DataflowMatch)
 									   .filter(y -> y.get(0) == object).collect(Collectors.toList());
-			traceF.values().removeAll(dontCare);
+			//traceF.values().removeAll(dontCare);
+			for (IPatternMatch removal : dontCare) {
+				removeReferenceMatch(model, removal);
+			}
 			model.dontCareRemoval.addAll(dontCare);
 			List<IPatternMatch> dontCareExtended = traceE.get(object).stream().filter(x -> x instanceof DataflowExtendedMatch)
 									  .filter(y -> y.get(0) == object).collect(Collectors.toList());
