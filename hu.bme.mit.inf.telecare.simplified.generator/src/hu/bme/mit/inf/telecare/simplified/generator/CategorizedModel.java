@@ -1,6 +1,7 @@
 package hu.bme.mit.inf.telecare.simplified.generator;
 
 import java.io.PrintWriter;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,6 +34,8 @@ public class CategorizedModel {
 	public final Set<IPatternMatch> refAddition= Sets.newHashSet();
 
 	public final Set<EObject> newObjects = Sets.newHashSet();
+	
+	public final Set<IPatternMatch> originalReferences = new HashSet<IPatternMatch>();
 	
 	public CharSequence yedOriginal;
 	public CharSequence yedModified;
