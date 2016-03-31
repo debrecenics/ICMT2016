@@ -101,7 +101,7 @@ public class ChangeGenerator {
 			introduceChanges(changeSize, ChangeTypes.RemoveInformationTypeWithEdges);
 		
 		model.originalReferences.addAll(traceF.values());
-		
+
 		model.refRemoval.addAll(model.dontCareRemoval);
 		buildModifiedViewModels();
 		
