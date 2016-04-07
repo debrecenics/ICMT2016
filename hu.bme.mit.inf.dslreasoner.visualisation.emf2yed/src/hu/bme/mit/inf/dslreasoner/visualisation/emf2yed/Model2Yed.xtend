@@ -123,10 +123,12 @@ class Model2Yed{
 	def protected transormTitle(EObject object,int id)
 		 '''o«id»: «object.eClass.name»'''
 	
-	def protected dispatch transformAttribute(EAttribute attribute, Object value) '''«attribute.name» = «value»'''
+	def protected dispatch transformAttribute(EAttribute attribute, Void value) '''«attribute.name» = ?'''
+	def protected dispatch transformAttribute(EAttribute attribute, Object value) '''«attribute.name» = «transformAttributeValue(value,attribute.EType.instanceClass)»'''
 	def protected dispatch transformAttribute(EAttribute attribute, List<?> values) '''«attribute.name» = [«values.map[transformAttributeValue(attribute.EType.instanceClass)].join(",")»]'''
 	
-	def dispatch transformAttributeValue(String value, Class<?> type) '''"«value»"'''
+	def dispatch transformAttributeValue(Void value, Class<?> type) '''?'''
+	def dispatch transformAttributeValue(String value, Class<?> type) '''«value»'''
 	def dispatch transformAttributeValue(double value,Class<?> type) '''«value»'''
 	def dispatch transformAttributeValue(int value,Class<?> type) '''«value»'''
 	def dispatch transformAttributeValue(Object value,Class<?> type) {
